@@ -2,17 +2,23 @@
 (function () {
     if (typeof window !== 'undefined' && typeof window.WebSocket === 'function') {
         var NativeWebSocket = window.WebSocket;
-        var buildClientWsUrl = function () {
-            return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/client';
+        var remapLocalWsUrl = function (url) {
+            if (typeof url !== 'string') {
+                return url;
+            }
+
+            var match = url.match(/^ws:\/\/127\.0\.0\.1(?::\d+)?(\/.*)?$/i);
+            if (!match) {
+                return url;
+            }
+
+            var suffix = match[1] || '/client';
+            return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + suffix;
         };
 
         window.WebSocket = class PatchedWebSocket extends NativeWebSocket {
             constructor(url, protocols) {
-                if (url === 'ws://127.0.0.1/client') {
-                    url = buildClientWsUrl();
-                }
-
-                super(url, protocols);
+                super(remapLocalWsUrl(url), protocols);
             }
         };
 
