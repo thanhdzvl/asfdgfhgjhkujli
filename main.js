@@ -6,15 +6,24 @@
             return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/client';
         };
 
-        window.WebSocket = function (url, protocols) {
-            if (url === 'ws://127.0.0.1/client') {
-                url = buildClientWsUrl();
-            }
+        window.WebSocket = class PatchedWebSocket extends NativeWebSocket {
+            constructor(url, protocols) {
+                if (url === 'ws://127.0.0.1/client') {
+                    url = buildClientWsUrl();
+                }
 
-            return protocols !== undefined ? new NativeWebSocket(url, protocols) : new NativeWebSocket(url);
+                super(url, protocols);
+            }
         };
 
-        window.WebSocket.prototype = NativeWebSocket.prototype;
+        ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED'].forEach(function (name) {
+            Object.defineProperty(window.WebSocket, name, {
+                configurable: true,
+                enumerable: true,
+                value: NativeWebSocket[name],
+                writable: false
+            });
+        });
     }
 
     if (typeof window.jsb === 'object') {
