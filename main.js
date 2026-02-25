@@ -1,5 +1,22 @@
 
 (function () {
+    if (typeof window !== 'undefined' && typeof window.WebSocket === 'function') {
+        var NativeWebSocket = window.WebSocket;
+        var buildClientWsUrl = function () {
+            return (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/client';
+        };
+
+        window.WebSocket = function (url, protocols) {
+            if (url === 'ws://127.0.0.1/client') {
+                url = buildClientWsUrl();
+            }
+
+            return protocols !== undefined ? new NativeWebSocket(url, protocols) : new NativeWebSocket(url);
+        };
+
+        window.WebSocket.prototype = NativeWebSocket.prototype;
+    }
+
     if (typeof window.jsb === 'object') {
         var hotUpdateSearchPaths = localStorage.getItem('HotUpdateSearchPaths');
         if (hotUpdateSearchPaths) {
